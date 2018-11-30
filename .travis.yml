@@ -1,0 +1,13 @@
+sudo: required
+os: linux
+language: cpp
+services:
+  - docker
+# Fedora supports the required libraries. Therefore, use docker with a Fedora image:
+before_install:
+  - docker pull fedora:27
+  - docker ps -a
+  - docker run fedora:27 /bin/sh -c "cd /root; dnf -y install git bash; git clone https://github.com/tdauth/PEPM19-poster-cpp.git; cd ./PEPM19-poster-cpp; bash ./buildtravisci.sh"
+# Use a script to disable the default automake build:
+script:
+  - ls
