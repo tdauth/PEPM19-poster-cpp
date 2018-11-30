@@ -4,15 +4,8 @@
 [![Build Status](https://travis-ci.org/tdauth/cpp-futures-promises.svg?branch=master)](https://travis-ci.org/tdauth/cpp-futures-promises)
 
 ## Manual Build
-To compile the project run one of the the following Bash scripts on Linux:
-* [build.sh](./build.sh)
-* [buildcoverage.sh](./buildcoverage.sh)
-* [buildrelease.sh](./buildrelease.sh)
+To compile the project run the Bash script [buildrelease.sh](./buildrelease.sh) on Linux.
 
-They will compile the project.
-The first two will run all unit tests.
-The third will create an RPM package.
-Note that all targets are added as CTest unit tests which simplifies their execution.
 The dependencies will be downloaded and compiled automatically.
 Therefore, you need Internet access when building for the first time.
 
