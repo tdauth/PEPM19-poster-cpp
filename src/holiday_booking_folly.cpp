@@ -106,10 +106,13 @@ int main(int argc, char *argv[])
 	folly::init(&argc, &argv);
 	auto ex = getCPUExecutor().get();
 
-	Future<HolidayLocationAndRating> x1 = holidayLocationSwitzerland().thenValue(currencyRating).filter(budgetIsSufficient);
-	Future<HolidayLocationAndRating> x2 = holidayLocationUSA().thenValue(currencyRating).filter(budgetIsSufficient);
-	std::array<Future<HolidayLocationAndRating>, 2> both{{ std::move(x1), std::move(x2) }};
-	auto x3 = collectAnyWithoutException(std::move(both)).via(ex); // L1
+	auto x1 = holidayLocationSwitzerland()
+		.thenValue(currencyRating)
+		.filter(budgetIsSufficient);
+	auto x2 = holidayLocationUSA()
+		.thenValue(currencyRating)
+		.filter(budgetIsSufficient);
+	auto x3 = collectAnyWithoutException(std::array<Future<HolidayLocationAndRating>, 2>{{ std::move(x1), std::move(x2) }}).via(ex); // L1
 	auto x4 = std::move(x3).thenValue(bookHoliday); // TODO Error Handling:.onError(dontBookAnything); // L2
 	auto x5 = std::move(x4).thenValue(letterToFamily);
 	auto x6 = std::move(x5).thenValue(letterToFriends); // L3

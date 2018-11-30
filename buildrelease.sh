@@ -19,5 +19,18 @@ if [ "$?" -ne 0 ] ; then
 	exit 1
 fi
 
+cd ./src
+
 ./holiday_booking_folly
+
+# Show some build logs for TravisCI:
+if [ "$?" -ne 0 ] ; then
+	exit 1
+fi
+
 ./try_complete_with_folly
+
+# Show some build logs for TravisCI:
+if [ "$?" -ne 0 ] ; then
+	exit 1
+fi
