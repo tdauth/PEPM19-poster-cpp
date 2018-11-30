@@ -1,7 +1,7 @@
 # PEPM19-poster-cpp
 
 ## Automatic Build with TravisCI
-[![Build Status](https://travis-ci.org/tdauth/cpp-futures-promises.svg?branch=master)](https://travis-ci.org/tdauth/cpp-futures-promises)
+[![Build Status](https://travis-ci.org/tdauth/PEPM19-poster-cpp.svg?branch=master)](https://travis-ci.org/tdauth/PEPM19-poster-cpp)
 
 ## Manual Build
 To compile the project run the Bash script [buildrelease.sh](./buildrelease.sh) on Linux.
