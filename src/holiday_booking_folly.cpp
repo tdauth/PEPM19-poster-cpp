@@ -31,14 +31,35 @@ struct HolidayLocation {
 		}
 
 		stringstream sstream;
-		sstream <<"Lets book ";
-		sstream << name;
-		sstream << " for ";
-		sstream << price
-		<< " " << currency << ". Join me in my holidays!";
+		sstream
+		<< "Lets book "
+		<< name
+		<< " for "
+		<< price
+		<< " "
+		<< currency
+		<< ". Join me in my holidays!";
+		return sstream.str();
+	}
+
+	string toString() const {
+		stringstream sstream;
+		sstream
+		<< "HolidayLocation("
+		<< price
+		<< ','
+		<< name
+		<< ','
+		<< currency
+		<< ")";
 		return sstream.str();
 	}
 };
+
+ostream& operator<<(ostream &out, const HolidayLocation &location)
+{
+	return out << location.toString();
+}
 
 const auto AtHome = HolidayLocation {
 	.price = 0.0,
@@ -53,9 +74,10 @@ struct HolidayLocationAndRating {
 	double rating;
 };
 
+// Increase both prices to stay at home.
 Future<HolidayLocation> holidayLocationSwitzerland() {
 	return makeFuture(HolidayLocation {
-		.price = 600.0,
+		.price = 600.0, // Increase to choose the USA over Switzerland.
 		.name = "Switzerland",
 		.currency = "CHF"
 	});
@@ -63,7 +85,7 @@ Future<HolidayLocation> holidayLocationSwitzerland() {
 
 Future<HolidayLocation> holidayLocationUSA(){
 	return makeFuture(HolidayLocation {
-		.price = 600.0,
+		.price = 600.0, // Increase to choose Switzerland over the USA.
 		.name = "the USA",
 		.currency = "USD"
 	});
@@ -87,20 +109,28 @@ HolidayLocation bookHoliday(pair<size_t, HolidayLocationAndRating> &&locationAnd
 	return locationAndRating.second.location;
 }
 
-HolidayLocation dontBookAnything() {
+HolidayLocation dontBookAnything(exception_wrapper&&) {
 	return AtHome;
 }
 
 HolidayLocation letterToFamily(HolidayLocation &&location) {
-	cerr << "Send letter to family: " << location.getFamilyLetter() << endl;
+	cout << "Send a letter to family: " << location.getFamilyLetter() << endl;
 	return location;
 }
 
 HolidayLocation letterToFriends(HolidayLocation &&location) {
-	cerr << "Send letter to friends: " << location.getFriendsLetter() << endl;
+	cout << "Send a letter to friends: " << location.getFriendsLetter() << endl;
 	return location;
 }
 
+/*
+ * Issues:
+ * I1: We have to move futures.
+ * I2: We cannot give priority to Switzerland. There is no fallbackTo like in Scala FP.
+ * I3: We have to convert the SemiFuture into a Future to use callbacks.
+ * I4: We have to create a new future for every chained callback. We could use thenMulti for L3 but it would lead to the same code internally.
+ * I5: We cannot call get multiple times.
+ */
 int main(int argc, char *argv[])
 {
 	init(&argc, &argv);
@@ -112,13 +142,15 @@ int main(int argc, char *argv[])
 	auto x2 = holidayLocationUSA()
 		.thenValue(currencyRating)
 		.filter(budgetIsSufficient);
-	auto x3 = collectAnyWithoutException(array<Future<HolidayLocationAndRating>, 2>{{ move(x1), move(x2) }}).via(ex); // L1
-	auto x4 = move(x3).thenValue(bookHoliday); // TODO Error Handling:.onError(dontBookAnything); // L2
-	// TODO Move the results, so we can see the text.
+	decltype(x1) both[] = { move(x1), move(x2) }; // I1
+	auto x3 = collectAnyWithoutException(begin(both), end(both)) // I2
+		.via(ex); // I3
+	auto x4 = move(x3).thenValue(bookHoliday).thenError(dontBookAnything);
 	auto x5 = move(x4).thenValue(letterToFamily);
-	auto x6 = move(x5).thenValue(letterToFriends); // L3
+	auto x6 = move(x5).thenValue(letterToFriends); // I4
+	auto r = move(x6).get(); // I5
 
-	x6.wait();
+	cout << r << endl;
 
 	return 0;
 }

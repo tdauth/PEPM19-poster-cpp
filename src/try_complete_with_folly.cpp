@@ -34,7 +34,6 @@ template<typename T>
 void tryCompleteWith(Promise<T> &&p, Future<T> &&f)
 {
 	auto ctx = make_shared<Future<T>>(move(f));
-	// TODO use thenTry?
 	ctx->setCallback_([p = move(p), ctx] (Try<T> &&t) mutable
 		{
 			tryComplete(p, move(t));
