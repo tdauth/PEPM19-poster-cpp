@@ -40,6 +40,17 @@ void tryCompleteWith(Promise<T> &&p, Future<T> &&f)
 		});
 }
 
+template<typename T>
+class Core {
+	Core(const Core &other); // S1
+	Core(Core &&other) = delete;
+	void tryComplete(Try<T> &&t); // S2
+	Core(Executor *ex); // S3
+	template<typename Callback>
+	void onComplete(Callback &&callback); // S4
+	T geC(); // S5
+};
+
 int main(int argc, char *argv[])
 {
 	init(&argc, &argv);
