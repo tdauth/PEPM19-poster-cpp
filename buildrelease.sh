@@ -21,6 +21,13 @@ fi
 
 cd ./src
 
+./basic_example_folly
+
+# Show some build logs for TravisCI:
+if [ "$?" -ne 0 ] ; then
+	exit 1
+fi
+
 ./holiday_booking_folly
 
 # Show some build logs for TravisCI:

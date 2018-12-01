@@ -5,9 +5,11 @@
 #include <folly/executors/GlobalExecutor.h>
 
 using namespace folly;
+using namespace std;
+
 
 template<typename T>
-bool tryComplete(folly::Promise<T> &p, folly::Try<T> &&t)
+bool tryComplete(Promise<T> &p, Try<T> &&t)
 {
 	if (!t.hasValue() && !t.hasException())
 	{
@@ -16,11 +18,11 @@ bool tryComplete(folly::Promise<T> &p, folly::Try<T> &&t)
 
 	try
 	{
-		p.setTry(std::move(t));
+		p.setTry(move(t));
 
 		return true;
 	}
-	catch (const folly::PromiseAlreadySatisfied &e)
+	catch (const PromiseAlreadySatisfied &e)
 	{
 		return false;
 	}
@@ -31,22 +33,25 @@ bool tryComplete(folly::Promise<T> &p, folly::Try<T> &&t)
 template<typename T>
 void tryCompleteWith(Promise<T> &&p, Future<T> &&f)
 {
-	auto ctx = std::make_shared<Future<T>>(std::move(f));
+	auto ctx = make_shared<Future<T>>(move(f));
 	// TODO use thenTry?
-	ctx->setCallback_([p = std::move(p), ctx] (Try<T> &&t) mutable
+	ctx->setCallback_([p = move(p), ctx] (Try<T> &&t) mutable
 		{
-			tryComplete(p, std::move(t));
+			tryComplete(p, move(t));
 		});
 }
 
-int main() {
+int main(int argc, char *argv[])
+{
+	init(&argc, &argv);
 	auto x1 = futures::sleep(Duration(5)).thenValue([] (Unit)  { return 10; });
 	auto p = Promise<int>();
 	auto x2 = p.getFuture();
 
-	tryCompleteWith(std::move(p), std::move(x1));
+	tryCompleteWith(move(p), move(x1));
 
-	std::cerr << "Result: " << std::move(x2).get() << std::endl;
+	auto r = move(x2).get();
+	cerr << "Result: " << r << endl;
 
 	return 0;
 }

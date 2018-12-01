@@ -7,29 +7,30 @@
 #include <folly/executors/GlobalExecutor.h>
 
 using namespace folly;
+using namespace std;
 
 const auto budgetEUR = 600;
 
 struct HolidayLocation {
 	double price;
-	std::string name;
-	std::string currency;
-	std::string familyLetter;
-	std::string friendsLetter;
+	string name;
+	string currency;
+	string familyLetter;
+	string friendsLetter;
 
-	std::string getFamilyLetter() const {
-		if (familyLetter.empty()) {
+	string getFamilyLetter() const {
+		if (!familyLetter.empty()) {
 				return familyLetter;
 		}
 		return "Dear family, I am going to " + name + ".";
 	}
 
-	std::string getFriendsLetter() const {
-		if (friendsLetter.empty()) {
+	string getFriendsLetter() const {
+		if (!friendsLetter.empty()) {
 			return friendsLetter;
 		}
 
-		std::stringstream sstream;
+		stringstream sstream;
 		sstream <<"Lets book ";
 		sstream << name;
 		sstream << " for ";
@@ -68,42 +69,41 @@ Future<HolidayLocation> holidayLocationUSA(){
 	});
 };
 
-Future<HolidayLocationAndRating> currencyRating(HolidayLocation location) {
+Future<HolidayLocationAndRating> currencyRating(HolidayLocation &&location) {
 	if (location.currency == "CHF") {
 		return makeFuture(HolidayLocationAndRating { .location = location, .rating = 1.13 });
 	} else if (location.currency == "USD") {
 		return makeFuture(HolidayLocationAndRating { .location = location, .rating = 1.14 });
 	}
 
-	return makeFuture<HolidayLocationAndRating>(std::runtime_error("Unknown currency!"));
+	return makeFuture<HolidayLocationAndRating>(runtime_error("Unknown currency!"));
 }
 
-bool budgetIsSufficient(HolidayLocationAndRating locationAndRating) {
+bool budgetIsSufficient(const HolidayLocationAndRating &locationAndRating) {
 	return locationAndRating.rating * budgetEUR >= locationAndRating.location.price;
 }
 
-HolidayLocation bookHoliday(std::pair<std::size_t, HolidayLocationAndRating> &&locationAndRating) {
+HolidayLocation bookHoliday(pair<size_t, HolidayLocationAndRating> &&locationAndRating) {
 	return locationAndRating.second.location;
 }
-
 
 HolidayLocation dontBookAnything() {
 	return AtHome;
 }
 
-HolidayLocation letterToFamily(HolidayLocation location) {
-	std::cerr << location.getFamilyLetter() << std::endl;
+HolidayLocation letterToFamily(HolidayLocation &&location) {
+	cerr << "Send letter to family: " << location.getFamilyLetter() << endl;
 	return location;
 }
 
-HolidayLocation letterToFriends(HolidayLocation location) {
-	std::cerr << location.getFriendsLetter() << std::endl;
+HolidayLocation letterToFriends(HolidayLocation &&location) {
+	cerr << "Send letter to friends: " << location.getFriendsLetter() << endl;
 	return location;
 }
 
 int main(int argc, char *argv[])
 {
-	folly::init(&argc, &argv);
+	init(&argc, &argv);
 	auto ex = getCPUExecutor().get();
 
 	auto x1 = holidayLocationSwitzerland()
@@ -112,10 +112,11 @@ int main(int argc, char *argv[])
 	auto x2 = holidayLocationUSA()
 		.thenValue(currencyRating)
 		.filter(budgetIsSufficient);
-	auto x3 = collectAnyWithoutException(std::array<Future<HolidayLocationAndRating>, 2>{{ std::move(x1), std::move(x2) }}).via(ex); // L1
-	auto x4 = std::move(x3).thenValue(bookHoliday); // TODO Error Handling:.onError(dontBookAnything); // L2
-	auto x5 = std::move(x4).thenValue(letterToFamily);
-	auto x6 = std::move(x5).thenValue(letterToFriends); // L3
+	auto x3 = collectAnyWithoutException(array<Future<HolidayLocationAndRating>, 2>{{ move(x1), move(x2) }}).via(ex); // L1
+	auto x4 = move(x3).thenValue(bookHoliday); // TODO Error Handling:.onError(dontBookAnything); // L2
+	// TODO Move the results, so we can see the text.
+	auto x5 = move(x4).thenValue(letterToFamily);
+	auto x6 = move(x5).thenValue(letterToFriends); // L3
 
 	x6.wait();
 
